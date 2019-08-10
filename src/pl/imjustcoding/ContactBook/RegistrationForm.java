@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -409,6 +410,15 @@ public class RegistrationForm extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextField_FNameActionPerformed
 
+    public boolean verifData(){
+        if(jTextField_FName.getText().equals("")&&jTextField_LName.getText().equals("")||jTextField_UserName.getText().equals("")||String.valueOf(jPasswordField.getPassword()).equals("")||imagePth==null){
+            JOptionPane.showMessageDialog(null,"One or more field are empty!");
+            return false;
+        }else{
+            return true;
+        }
+            
+    }
     private void jButton_CreateAccActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_CreateAccActionPerformed
         this.jLabel_Valid.setVisible(false);
         this.jLabel_Valid2.setVisible(false);
@@ -439,14 +449,73 @@ public class RegistrationForm extends javax.swing.JFrame {
             jLabel_Valid5.setVisible(true);
         }
         
-        if(!pass.equals(String.valueOf(jPasswordField2.getPassword()))){
+        if(pass.equals(String.valueOf(jPasswordField2.getPassword()))){
+            if(verifData()){
+                Connection con = null;
+        
+                try {
+                    con=MyConnection.getConnection();
+                } catch (SQLException ex) {
+                    Logger.getLogger(RegistrationForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                PreparedStatement ps;
+
+                try {
+                    ps=con.prepareStatement("INSERT INTO user(`fname`, `lname`, `username`, `pass`, `pic`) VALUES (?,?,?,?,?)");
+                    ps.setString(1, fName);
+                    ps.setString(2, lName);
+                    ps.setString(3, uName);
+                    ps.setString(4, pass);
+
+                    try{
+                        InputStream img=new FileInputStream(new File(imagePth));
+                        ps.setBlob(5, img);
+                    }catch(Exception ex){
+                        System.out.println("Berd");
+                    }
+                    
+                    if(isUsernameExist(uName)){
+                        JOptionPane.showMessageDialog(null,"Username Already Exist");
+                    }else{
+                            if(ps.executeUpdate()!=0){
+                            JOptionPane.showMessageDialog(null,"Account Created");
+                            LoginForm lf=new LoginForm();
+                            lf.setVisible(true);
+                            lf.pack();
+                            lf.setLocationRelativeTo(null);
+                            lf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                            this.dispose();
+                        }else{
+                            JOptionPane.showMessageDialog(null,"Something wrong happened");
+                        }
+                    }
+                } catch (Exception ex) {
+                    Logger.getLogger(RegistrationForm.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                    }
+        }else{
             jLabel_Valid4.setVisible(true);
             jLabel_Valid5.setVisible(true);
             JOptionPane.showMessageDialog(null,"Passwords are not the same","Error",2);
         }
         
-        Connection con = null;
-        
+    }//GEN-LAST:event_jButton_CreateAccActionPerformed
+
+    private void jLabel_RegistrationMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel_RegistrationMouseClicked
+        LoginForm lf=new LoginForm();
+        lf.setVisible(true);
+        lf.pack();
+        lf.setLocationRelativeTo(null);
+        lf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.dispose();
+    }//GEN-LAST:event_jLabel_RegistrationMouseClicked
+
+    public boolean isUsernameExist(String username){
+    
+        boolean isExist=false;
+        Connection con=null;
+    
         try {
             con=MyConnection.getConnection();
         } catch (SQLException ex) {
@@ -456,41 +525,21 @@ public class RegistrationForm extends javax.swing.JFrame {
         PreparedStatement ps;
         
         try {
-            ps=con.prepareStatement("INSERT INTO user(`fname`, `lname`, `username`, `pass`, `pic`) VALUES (?,?,?,?,?)");
-            ps.setString(1, fName);
-            ps.setString(2, lName);
-            ps.setString(3, uName);
-            ps.setString(4, pass);
+            ps=con.prepareStatement("SELECT * FROM `user` WHERE `username`=?");
+            ps.setString(1, username);
             
-            try{
-                InputStream img=new FileInputStream(new File(imagePth));
-                ps.setBlob(5, img);
-            }catch(Exception ex){
-                System.out.println("Berd");
+            ResultSet rs=ps.executeQuery();
+            
+            if(rs.next()){
+                isExist=true;
             }
-            
-            if(ps.executeUpdate()!=0){
-                JOptionPane.showMessageDialog(null,"Account Created");
-            }else{
-                JOptionPane.showMessageDialog(null,"Something wrong happened");
-            }
-            
-        } catch (Exception ex) {
+        } catch (SQLException ex) {
             Logger.getLogger(RegistrationForm.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        this.dispose();
-        new LoginForm();
-        
-        
-        
-    }//GEN-LAST:event_jButton_CreateAccActionPerformed
-
-    private void jLabel_RegistrationMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel_RegistrationMouseClicked
-        new LoginForm();
-        this.dispose();
-    }//GEN-LAST:event_jLabel_RegistrationMouseClicked
-
+        return isExist;
+    }
+    
     private void jLabel_RegistrationMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel_RegistrationMouseEntered
         jLabel_Registration.setForeground(new java.awt.Color(255, 255, 255));
     }//GEN-LAST:event_jLabel_RegistrationMouseEntered
@@ -508,7 +557,11 @@ public class RegistrationForm extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField_UserNameActionPerformed
 
     private void jLabel11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel11MouseClicked
-        new LoginForm();
+        LoginForm lf=new LoginForm();
+        lf.setVisible(true);
+        lf.pack();
+        lf.setLocationRelativeTo(null);
+        lf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.dispose();
     }//GEN-LAST:event_jLabel11MouseClicked
 
@@ -516,40 +569,19 @@ public class RegistrationForm extends javax.swing.JFrame {
         System.exit(0);
     }//GEN-LAST:event_jButton_CloseActionPerformed
 
-    public ImageIcon resizePic(String picPath){
-        
-        ImageIcon myImg=new ImageIcon(picPath);
-        Image img = myImg.getImage().getScaledInstance(jLabel_Pic.getWidth(), jLabel_Pic.getHeight() , Image.SCALE_SMOOTH);
-        ImageIcon myPicture =new ImageIcon(img);
-        
-        return myPicture;
-    }
+//    public ImageIcon resizePic(String picPath){
+//        
+//        ImageIcon myImg=new ImageIcon(picPath);
+//        Image img = myImg.getImage().getScaledInstance(jLabel_Pic.getWidth(), jLabel_Pic.getHeight() , Image.SCALE_SMOOTH);
+//        ImageIcon myPicture =new ImageIcon(img);
+//        
+//        return myPicture;
+//    }
     
     private void jButton_BrowseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_BrowseActionPerformed
-        JFileChooser filec=new JFileChooser();
-        filec.setCurrentDirectory(new File(System.getProperty("user.home")));
+        MyFunction mf=new MyFunction();
+        imagePth = mf.browseImage(jLabel_Pic);
         
-        //file extansion
-        FileNameExtensionFilter fileFilter=new FileNameExtensionFilter("*.Images","jpg","png","gif");
-        filec.addChoosableFileFilter(fileFilter);
-        
-        int fileState = filec.showSaveDialog(null);
-        
-        //if the user select a file 
-        if(fileState==JFileChooser.APPROVE_OPTION){
-            File selectedFile = filec.getSelectedFile();
-            String path = selectedFile.getAbsolutePath();
-            imagePth=path;
-            
-            //display the image in the jLabel using resize image
-            jLabel_Pic.setIcon(resizePic(path));
-            
-            //jLabel_Pic.setIcon(new ImageIcon(path));
-        }
-        // if the user cancel
-        else if(fileState == JFileChooser.CANCEL_OPTION){
-            System.out.println("No image Selected");
-        }
     }//GEN-LAST:event_jButton_BrowseActionPerformed
 
     /**
